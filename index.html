@@ -94,27 +94,73 @@
     <footer>Little Explorers © 2026</footer>
   </main>
 
-  <script>
-    function createProject() {
-      const topic = document.getElementById("topic").value.trim();
-      const language = document.getElementById("language").value;
-      const duration = document.getElementById("duration").value;
-      const details = document.getElementById("details").value.trim();
 
-      if (!topic) {
-        document.getElementById("result").textContent =
-          "Lütfen önce video konusunu yaz.";
-        return;
-      }
+<script>
+function createProject() {
+  const topic = document.getElementById("topic").value.trim();
+  const language = document.getElementById("language").value;
+  const duration = document.getElementById("duration").value;
+  const details = document.getElementById("details").value.trim();
+  const result = document.getElementById("result");
 
-      document.getElementById("result").textContent =
-        "Proje taslağı hazır! Konu: " + topic +
-        " | Dil: " + language +
-        " | Süre: " + duration +
-        (details ? " | Açıklama: " + details : "") +
-        ". Bu henüz video üretmez; sonraki adımda AI bağlantısını kuracağız.";
+  if (!topic) {
+    result.textContent = "Lütfen video konusunu yaz.";
+    return;
+  }
+
+  const scenes = [
+    {
+      time: "0-4 saniye",
+      action: "Puffy ekrana neşeyle girer ve çocukları keşfe çağırır.",
+      tr: "Merhaba küçük kaşifler!",
+      en: "Hello, little explorers!"
+    },
+    {
+      time: "4-10 saniye",
+      action: topic + " konusu renkli ve eğlenceli şekilde tanıtılır.",
+      tr: "Haydi birlikte keşfedelim!",
+      en: "Let's explore together!"
+    },
+    {
+      time: "10-17 saniye",
+      action: "Puffy örnek gösterir ve çocuklara basit bir soru sorar.",
+      tr: "Sence bu nedir?",
+      en: "What do you think this is?"
+    },
+    {
+      time: "17-24 saniye",
+      action: "Puffy doğru cevabı eğlenceli bir animasyonla açıklar.",
+      tr: "Harika! Birlikte öğrendik!",
+      en: "Wonderful! We learned together!"
+    },
+    {
+      time: "24-30 saniye",
+      action: "Puffy el sallar ve yeni keşif için vedalaşır.",
+      tr: "Bir sonraki keşifte görüşürüz!",
+      en: "See you on our next adventure!"
     }
-  </script>
-</body>
-</html>
+  ];
 
+  let output = "LITTLE EXPLORERS - VİDEO PLANI\n";
+  output += "================================\n";
+  output += "Konu: " + topic + "\n";
+  output += "Dil: " + language + "\n";
+  output += "Hedef yaş: 3-6\n";
+  output += "Süre: " + duration + "\n\n";
+
+  output += "SAHNE PLANI\n\n";
+
+  scenes.forEach((scene, index) => {
+    output += "SAHNE " + (index + 1) + " | " + scene.time + "\n";
+    output += "Görsel: " + scene.action + "\n";
+    output += "Türkçe: " + scene.tr + "\n";
+    output += "English: " + scene.en + "\n\n";
+  });
+
+  output += "EK NOTLAR\n";
+  output += details || "Neşeli, güvenli ve eğitici bir anlatım kullan.";
+  output += "\n\nBu çıktı ilk senaryo taslağıdır. Henüz AI video üretimi yapılmamıştır.";
+
+  result.textContent = output;
+}
+</script>
