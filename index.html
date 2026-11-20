@@ -1,1 +1,120 @@
 
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Little Explorers AI Studio</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #101827;
+      color: #fff;
+      padding: 24px;
+    }
+    .container { max-width: 850px; margin: auto; }
+    header { text-align: center; padding: 35px 10px; }
+    h1 { color: #65dfcf; font-size: 30px; }
+    header p { color: #c3d0df; }
+    .panel {
+      background: #1d2a3d;
+      border: 1px solid #34465d;
+      border-radius: 16px;
+      padding: 22px;
+      margin-bottom: 18px;
+    }
+    h2 { color: #ffd166; font-size: 20px; }
+    label { display: block; margin: 16px 0 8px; }
+    input, select, textarea {
+      width: 100%;
+      padding: 13px;
+      border-radius: 9px;
+      border: 1px solid #53657a;
+      background: #101827;
+      color: white;
+      font-size: 16px;
+    }
+    button {
+      width: 100%;
+      padding: 15px;
+      margin-top: 18px;
+      border: 0;
+      border-radius: 10px;
+      background: #65dfcf;
+      color: #10202b;
+      font-size: 16px;
+      font-weight: bold;
+    }
+    #result { color: #65dfcf; line-height: 1.6; }
+    footer { text-align: center; color: #91a0b2; padding: 20px; }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <header>
+      <h1>Little Explorers AI Studio</h1>
+      <p>Puffy ile eğlenceli ve eğitici dünyalar keşfet!</p>
+    </header>
+
+    <section class="panel">
+      <h2>Yeni video projesi</h2>
+
+      <label>Video konusu</label>
+      <input id="topic" placeholder="Örn: Renkleri öğreniyoruz">
+
+      <label>Video dili</label>
+      <select id="language">
+        <option>Türkçe + English</option>
+        <option>Türkçe</option>
+        <option>English</option>
+      </select>
+
+      <label>Video süresi</label>
+      <select id="duration">
+        <option>25 saniye</option>
+        <option>30 saniye</option>
+        <option>45 saniye</option>
+        <option>60 saniye</option>
+      </select>
+
+      <label>Ek açıklama</label>
+      <textarea id="details" rows="3"
+        placeholder="Videoda neler olsun?"></textarea>
+
+      <button onclick="createProject()">Proje taslağı oluştur</button>
+    </section>
+
+    <section class="panel">
+      <h2>Proje çıktısı</h2>
+      <p id="result">Henüz proje oluşturulmadı.</p>
+    </section>
+
+    <footer>Little Explorers © 2026</footer>
+  </main>
+
+  <script>
+    function createProject() {
+      const topic = document.getElementById("topic").value.trim();
+      const language = document.getElementById("language").value;
+      const duration = document.getElementById("duration").value;
+      const details = document.getElementById("details").value.trim();
+
+      if (!topic) {
+        document.getElementById("result").textContent =
+          "Lütfen önce video konusunu yaz.";
+        return;
+      }
+
+      document.getElementById("result").textContent =
+        "Proje taslağı hazır! Konu: " + topic +
+        " | Dil: " + language +
+        " | Süre: " + duration +
+        (details ? " | Açıklama: " + details : "") +
+        ". Bu henüz video üretmez; sonraki adımda AI bağlantısını kuracağız.";
+    }
+  </script>
+</body>
+</html>
+
