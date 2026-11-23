@@ -2,7 +2,13 @@
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
-
+    
+if (url.pathname === "/api/health") {
+  return Response.json({
+    worker: "active",
+    groqConfigured: Boolean(env.GROQ_API_KEY)
+  });
+}
     if (url.pathname === "/api/generate") {
       if (request.method !== "POST") {
         return Response.json(
