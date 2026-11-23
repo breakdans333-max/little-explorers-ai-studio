@@ -2,31 +2,8 @@
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
-    
 
-    );
-
-    const binary = Uint8Array.from(
-      atob(result.image),
-      c => c.charCodeAt(0)
-    );
-
-    return new Response(binary, {
-      headers: {
-        "Content-Type": "image/jpeg"
-      }
-    });
-
-  } catch (error) {
-    return Response.json({
-      success: false,
-      error: error.message
-    }, { status: 502 });
-  }
-}
-
-    
-    // Puffy görsel üretim API'si
+    // 1. Puffy görsel üretim API'si
     if (url.pathname === "/api/generate-image") {
       if (request.method !== "POST") {
         return Response.json(
@@ -83,10 +60,7 @@ export default {
       }
     }
 
-
-}
-
-    // 1. Sunucu sağlık kontrolü
+    // 2. Sunucu sağlık kontrolü
     if (url.pathname === "/api/health") {
       return Response.json({
         worker: "active",
@@ -94,10 +68,9 @@ export default {
       });
     }
 
-    // 2. Senaryo oluşturma
+    // 3. Senaryo oluşturma
     if (url.pathname === "/api/generate") {
 
-      // Yalnızca POST isteği kabul edilir
       if (request.method !== "POST") {
         return Response.json(
           {
@@ -107,8 +80,7 @@ export default {
           { status: 405 }
         );
       }
-      
-      // API anahtarı kontrolü
+
       if (!env.GROQ_API_KEY) {
         return Response.json(
           {
@@ -120,7 +92,6 @@ export default {
       }
 
       try {
-        // Kullanıcıdan gelen veriler
         const body = await request.json();
 
         const topic = String(body.topic || "").trim();
@@ -148,7 +119,6 @@ export default {
           );
         }
 
-        // Puffy için senaryo talimatları
         const prompt = `
 Sen Little Explorers adlı çocuk eğitim kanalının senaryo yazarısın.
 
@@ -219,7 +189,6 @@ Puffy karakter tutarlılığı, yaşa uygunluk, bilgi doğruluğu ve toplam vide
 Yalnızca senaryoyu üret. Açıklama veya senaryo dışı yorum ekleme.
 `;
 
-        // Groq API isteği
         const response = await fetch(
           "https://api.groq.com/openai/v1/chat/completions",
           {
@@ -246,7 +215,6 @@ Yalnızca senaryoyu üret. Açıklama veya senaryo dışı yorum ekleme.
           }
         );
 
-        // Groq yanıtını oku
         const responseText = await response.text();
 
         let result;
@@ -263,7 +231,6 @@ Yalnızca senaryoyu üret. Açıklama veya senaryo dışı yorum ekleme.
           );
         }
 
-        // API hata kontrolü
         if (!response.ok) {
           const groqError =
             result.error?.message || "Bilinmeyen Groq API hatası.";
@@ -277,7 +244,6 @@ Yalnızca senaryoyu üret. Açıklama veya senaryo dışı yorum ekleme.
           );
         }
 
-        // Senaryo metnini al
         const script =
           result.choices?.[0]?.message?.content;
 
@@ -291,7 +257,6 @@ Yalnızca senaryoyu üret. Açıklama veya senaryo dışı yorum ekleme.
           );
         }
 
-        // Başarılı yanıt
         return Response.json({
           success: true,
           script: script
@@ -308,7 +273,7 @@ Yalnızca senaryoyu üret. Açıklama veya senaryo dışı yorum ekleme.
       }
     }
 
-    // 3. Diğer istekleri web paneline yönlendir
+    // 4. Diğer istekleri web paneline yönlendir
     return env.ASSETS.fetch(request);
   }
 };
