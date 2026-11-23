@@ -3,7 +3,7 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
 
-    // 1. Sunucu kontrolü
+    // 1. Sunucu kontrolu
     if (url.pathname === "/api/health") {
       return Response.json({
         worker: "active",
@@ -100,7 +100,112 @@ export default {
       }
     }
 
-    // 3. Tek sahne görseli üretimi
+    // 3. ElevenLabs ile ses üretimi
+    if (url.pathname === "/api/generate-voice") {
+      if (request.method !== "POST") {
+        return Response.json(
+          { success: false, error: "Yalnızca POST isteği kabul edilir." },
+          { status: 405 }
+        );
+      }
+
+      if (!env.ELEVENLABS_API_KEY) {
+        return Response.json(
+          { success: false, error: "ElevenLabs API anahtarı yapılandırılmamış." },
+          { status: 500 }
+        );
+      }
+
+      try {
+        const body = await request.json();
+        const text = String(body.text || "").trim();
+
+        // Varsayılan ses: Anika
+        const voiceId = String(
+          body.voice_id || "RABOvaPec1ymXz02oDQi"
+        ).trim();
+
+        if (!text) {
+          return Response.json(
+            { success: false, error: "Lütfen seslendirilecek metni yaz." },
+            { status: 400 }
+          );
+        }
+
+        if (text.length > 5000) {
+          return Response.json(
+            { success: false, error: "Metin çok uzun. En fazla 5000 karakter kullan." },
+            { status: 400 }
+          );
+        }
+
+        if (!/^[a-zA-Z0-9_-]{1,100}$/.test(voiceId)) {
+          return Response.json(
+            { success: false, error: "Geçersiz ses kimliği." },
+            { status: 400 }
+          );
+        }
+
+        const response = await fetch(
+          "https://api.elevenlabs.io/v1/text-to-speech/" +
+            encodeURIComponent(voiceId) +
+            "?output_format=mp3_44100_128",
+          {
+            method: "POST",
+            headers: {
+              "xi-api-key": env.ELEVENLABS_API_KEY,
+              "Content-Type": "application/json",
+              "Accept": "audio/mpeg"
+            },
+            body: JSON.stringify({
+              text,
+              model_id: "eleven_multilingual_v2",
+              voice_settings: {
+                stability: 0.4,
+                similarity_boost: 0.8,
+                style: 0.35,
+                use_speaker_boost: true,
+                speed: 1.05
+              }
+            })
+          }
+        );
+
+        if (!response.ok) {
+          const errorText = await response.text();
+
+          return Response.json(
+            {
+              success: false,
+              error: "ElevenLabs ses üretim hatası.",
+              providerStatus: response.status,
+              details: errorText.slice(0, 1000)
+            },
+            { status: 502 }
+          );
+        }
+
+        return new Response(response.body, {
+          status: 200,
+          headers: {
+            "Content-Type": "audio/mpeg",
+            "Content-Disposition": 'inline; filename="anika-voice.mp3"',
+            "Cache-Control": "no-store"
+          }
+        });
+
+      } catch (error) {
+        return Response.json(
+          {
+            success: false,
+            error: "Ses üretilemedi: " + error.message
+          },
+          { status: 500 }
+        );
+      }
+    }
+
+    // 4. Tek sahne görseli üretimi
     if (url.pathname === "/api/generate-image") {
       if (request.method !== "POST") {
         return Response.json(
@@ -152,7 +257,7 @@ export default {
       }
     }
 
-    // 4. Otomatik senaryo ve sahne oluşturma
+    // 5. Otomatik senaryo ve sahne oluşturma
     if (url.pathname === "/api/generate") {
       if (request.method !== "POST") {
         return Response.json(
@@ -382,7 +487,7 @@ JSON dışında hiçbir şey yazma.
       }
     }
 
-    // 5. Diğer istekleri web paneline yönlendir
+    // 6. Diğer istekleri web paneline yönlendir
     return env.ASSETS.fetch(request);
   }
 };
