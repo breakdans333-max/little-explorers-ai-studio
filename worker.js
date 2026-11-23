@@ -15,6 +15,11 @@ if (url.pathname === "/api/health") {
           { success: false, error: "Yalnızca POST isteği kabul edilir." },
           { status: 405 }
         );
+        return Response.json({
+  success: true,
+  script: "Tanılama sonucu: GROQ_API_KEY = " +
+    String(Boolean(env.GROQ_API_KEY))
+});
       }
 
       if (!env.GROQ_API_KEY) {
