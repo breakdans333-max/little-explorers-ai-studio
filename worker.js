@@ -12,14 +12,27 @@ if (url.pathname === "/api/health") {
     if (url.pathname === "/api/generate") {
       if (request.method !== "POST") {
         return Response.json(
-          { success: false, error: "Yalnızca POST isteği kabul edilir." },
-          { status: 405 }
-        );
-        return Response.json({
+      
+if (request.method !== "POST") {
+  return Response.json(
+    { success: false, error: "Yalnızca POST isteği kabul edilir." },
+    { status: 405 }
+  );
+}
+
+return Response.json({
   success: true,
   script: "Tanılama sonucu: GROQ_API_KEY = " +
     String(Boolean(env.GROQ_API_KEY))
 });
+
+if (!env.GROQ_API_KEY) {
+  return Response.json(
+    { success: false, error: "Groq API anahtarı yapılandırılmamış." },
+    { status: 500 }
+  );
+}
+
       }
 
       if (!env.GROQ_API_KEY) {
