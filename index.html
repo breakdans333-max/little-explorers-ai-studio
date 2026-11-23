@@ -11,27 +11,23 @@
 
     body {
       margin: 0;
+      padding: 20px;
       font-family: Arial, sans-serif;
       background: #101827;
-      color: #fff;
-      padding: 24px;
+      color: white;
     }
 
     .container {
-      max-width: 850px;
+      max-width: 900px;
       margin: auto;
     }
 
     header {
       text-align: center;
-      padding: 35px 10px;
+      padding: 25px 10px;
     }
 
-    h1 {
-      color: #65dfcf;
-      font-size: 30px;
-    }
-
+    h1 { color: #65dfcf; }
     header p { color: #c3d0df; }
 
     .panel {
@@ -42,10 +38,8 @@
       margin-bottom: 18px;
     }
 
-    h2 {
-      color: #ffd166;
-      font-size: 20px;
-    }
+    h2 { color: #ffd166; font-size: 20px; }
+    h3 { color: #65dfcf; }
 
     label {
       display: block;
@@ -76,30 +70,52 @@
     }
 
     button:disabled {
-      opacity: 0.6;
+      opacity: 0.5;
       cursor: wait;
     }
 
-    #result {
+    #status {
       color: #65dfcf;
       line-height: 1.6;
       white-space: pre-wrap;
-      overflow-wrap: anywhere;
     }
 
-    #imageStatus {
-      color: #65dfcf;
-      line-height: 1.5;
+    #progressTrack {
+      height: 12px;
+      background: #101827;
+      border-radius: 20px;
+      overflow: hidden;
+      margin-top: 15px;
     }
 
-    #generatedImage {
-      display: none;
+    #progressBar {
+      height: 100%;
+      width: 0%;
+      background: #65dfcf;
+      transition: width 0.3s;
+    }
+
+    .scene {
+      border: 1px solid #53657a;
+      border-radius: 12px;
+      padding: 16px;
+      margin-top: 18px;
+    }
+
+    .scene img {
+      display: block;
       width: 100%;
       max-width: 500px;
-      margin: 20px auto 0;
-      border-radius: 14px;
-      border: 2px solid #65dfcf;
+      margin: 15px auto;
+      border-radius: 12px;
     }
+
+    .scene p {
+      line-height: 1.6;
+      color: #dce5ef;
+    }
+
+    .scene strong { color: #ffd166; }
 
     footer {
       text-align: center;
@@ -132,40 +148,35 @@
 
       <label>Video süresi</label>
       <select id="duration">
-        <option>25 saniye</option>
-        <option>30 saniye</option>
-        <option>45 saniye</option>
-        <option>60 saniye</option>
+        <option value="25">25 saniye</option>
+        <option value="30" selected>30 saniye</option>
+        <option value="45">45 saniye</option>
+        <option value="60">60 saniye</option>
       </select>
 
       <label>Ek açıklama</label>
       <textarea id="details" rows="3"
         placeholder="Videoda neler olsun?"></textarea>
 
-      <button id="projectButton" onclick="createProject()">
-        Proje taslağı oluştur
+      <button id="generateButton" onclick="generateFullProject()">
+        Tüm projeyi otomatik oluştur
       </button>
     </section>
 
     <section class="panel">
-      <h2>Proje çıktısı</h2>
-      <p id="result">Henüz proje oluşturulmadı.</p>
+      <h2>Üretim durumu</h2>
+      <p id="status">Henüz üretim başlatılmadı.</p>
+
+      <div id="progressTrack">
+        <div id="progressBar"></div>
+      </div>
     </section>
 
     <section class="panel">
-      <h2>Puffy görsel stüdyosu</h2>
-
-      <label>Görsel açıklaması</label>
-
-      <textarea id="imagePrompt" rows="5">Cute fluffy cream white 3D cartoon character named Puffy, big turquoise eyes, peach inner floppy ears, tiny brown nose, turquoise backpack with a golden star, standing in a colorful magical world, adorable preschool animation, high quality, vertical 9:16 composition. Keep the same character appearance.</textarea>
-
-      <button id="imageButton" onclick="generateImage()">
-        Puffy görseli oluştur
-      </button>
-
-      <p id="imageStatus">Henüz görsel oluşturulmadı.</p>
-
-      <img id="generatedImage" alt="Puffy tarafından oluşturulan görsel">
+      <h2>Video projesi ve sahneler</h2>
+      <div id="projectOutput">
+        Henüz proje oluşturulmadı.
+      </div>
     </section>
 
     <footer>Little Explorers © 2026</footer>
@@ -173,24 +184,48 @@
   </main>
 
   <script>
-    async function createProject() {
+    function addText(parent, tag, label, value) {
+      const element = document.createElement(tag);
+      const strong = document.createElement("strong");
+
+      strong.textContent = label + ": ";
+      element.appendChild(strong);
+      element.appendChild(
+        document.createTextNode(value || "-")
+      );
+
+      parent.appendChild(element);
+    }
+
+    function showProgress(percent) {
+      document.getElementById("progressBar").style.width =
+        percent + "%";
+    }
+
+    async function generateFullProject() {
       const topic = document.getElementById("topic").value.trim();
       const language = document.getElementById("language").value;
-      const duration = parseInt(document.getElementById("duration").value);
+      const duration = Number(document.getElementById("duration").value);
       const details = document.getElementById("details").value.trim();
-      const result = document.getElementById("result");
-      const button = document.getElementById("projectButton");
+
+      const button = document.getElementById("generateButton");
+      const status = document.getElementById("status");
+      const output = document.getElementById("projectOutput");
 
       if (!topic) {
-        result.textContent = "Lütfen video konusunu yaz.";
+        status.textContent = "Lütfen önce video konusunu yaz.";
         return;
       }
 
       button.disabled = true;
-      result.textContent = "Puffy senaryonu hazırlıyor...";
+      output.replaceChildren();
+      showProgress(0);
 
       try {
-        const response = await fetch("/api/generate", {
+        // AŞAMA 1: Senaryo üretimi
+        status.textContent = "1. Aşama: Puffy senaryoyu hazırlıyor...";
+
+        const scriptResponse = await fetch("/api/generate", {
           method: "POST",
           headers: {
             "Content-Type": "application/json"
@@ -203,57 +238,151 @@
           })
         });
 
-        const data = await response.json();
+        const scriptData = await scriptResponse.json();
 
-        if (!response.ok || !data.success) {
-          throw new Error(data.error || "Senaryo oluşturulamadı.");
+        if (!scriptResponse.ok || !scriptData.success) {
+          throw new Error(
+            scriptData.error || "Senaryo oluşturulamadı."
+          );
         }
 
-        result.textContent = data.script;
+        const project = scriptData.project;
 
-      } catch (error) {
-        result.textContent = "Bağlantı hatası: " + error.message;
-      } finally {
-        button.disabled = false;
-      }
-    }
+        if (!project || !Array.isArray(project.scenes)) {
+          throw new Error("Senaryo sahneleri alınamadı.");
+        }
 
-    async function generateImage() {
-      const prompt = document.getElementById("imagePrompt").value.trim();
-      const status = document.getElementById("imageStatus");
-      const button = document.getElementById("imageButton");
-      const image = document.getElementById("generatedImage");
+        const title = document.createElement("h3");
+        title.textContent =
+          project.title_tr + " / " + project.title_en;
 
-      if (!prompt) {
-        status.textContent = "Lütfen görsel açıklaması yaz.";
-        return;
-      }
+        output.appendChild(title);
 
-      button.disabled = true;
-      status.textContent = "Puffy'nin görseli hazırlanıyor...";
-      image.style.display = "none";
+        const sceneCards = [];
 
-      try {
-        const response = await fetch("/api/generate-image", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({ prompt })
+        // Sahne kartlarını önceden oluştur
+        project.scenes.forEach((scene) => {
+          const card = document.createElement("div");
+          card.className = "scene";
+
+          const heading = document.createElement("h3");
+          heading.textContent =
+            "Sahne " + scene.scene_number +
+            " (" + scene.start + "-" + scene.end + " saniye)";
+
+          const imageStatus = document.createElement("p");
+          imageStatus.textContent = "Görsel bekleniyor...";
+
+          const image = document.createElement("img");
+          image.alt = "Puffy sahne görseli";
+          image.style.display = "none";
+
+          card.appendChild(heading);
+          card.appendChild(imageStatus);
+          card.appendChild(image);
+
+          addText(card, "p", "Hareket", scene.motion);
+          addText(card, "p", "Kamera", scene.camera);
+          addText(card, "p", "Türkçe seslendirme", scene.voice_tr);
+          addText(card, "p", "English narration", scene.voice_en);
+          addText(card, "p", "Türkçe ekran yazısı", scene.text_tr);
+          addText(card, "p", "English screen text", scene.text_en);
+          addText(card, "p", "Ses efekti", scene.sound_effect);
+
+          output.appendChild(card);
+
+          sceneCards.push({
+            image,
+            imageStatus,
+            scene
+          });
         });
 
-        const data = await response.json();
+        // AŞAMA 2: Görselleri sırayla üret
+        for (let i = 0; i < sceneCards.length; i++) {
+          const item = sceneCards[i];
+          const sceneNumber = i + 1;
 
-        if (!response.ok || !data.success || !data.image) {
-          throw new Error(data.error || "Görsel oluşturulamadı.");
+          status.textContent =
+            "2. Aşama: " + sceneNumber +
+            "/" + sceneCards.length +
+            " sahnenin görseli oluşturuluyor...";
+
+          item.imageStatus.textContent =
+            "Görsel oluşturuluyor...";
+
+          const imageResponse = await fetch("/api/generate-image", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              prompt: item.scene.image_prompt
+            })
+          });
+
+          const imageData = await imageResponse.json();
+
+          if (
+            !imageResponse.ok ||
+            !imageData.success ||
+            !imageData.image
+          ) {
+            throw new Error(
+              "Sahne " + sceneNumber + ": " +
+              (imageData.error || "Görsel üretilemedi.")
+            );
+          }
+
+          item.image.src = imageData.image;
+          item.image.style.display = "block";
+          item.imageStatus.textContent =
+            "Görsel başarıyla oluşturuldu.";
+
+          showProgress(
+            Math.round(((i + 1) / sceneCards.length) * 100)
+          );
         }
 
-        image.src = data.image;
-        image.style.display = "block";
-        status.textContent = "Puffy görseli başarıyla oluşturuldu!";
+        // AŞAMA 3: Proje bilgileri
+        const description = document.createElement("div");
+        description.className = "scene";
+
+        addText(
+          description,
+          "p",
+          "Türkçe YouTube açıklaması",
+          project.description_tr
+        );
+
+        addText(
+          description,
+          "p",
+          "English YouTube description",
+          project.description_en
+        );
+
+        addText(
+          description,
+          "p",
+          "Etiketler",
+          Array.isArray(project.tags)
+            ? project.tags.join(" ")
+            : project.tags
+        );
+
+        output.appendChild(description);
+
+        status.textContent =
+          "Tamamlandı! " + sceneCards.length +
+          " sahnenin görselleri üretildi. Projeni kontrol edebilirsin.";
+
+        showProgress(100);
 
       } catch (error) {
-        status.textContent = "Görsel üretim hatası: " + error.message;
+        status.textContent =
+          "Üretim durdu: " + error.message +
+          "\nTamamlanan sahneler ekranda korunmuştur.";
       } finally {
         button.disabled = false;
       }
