@@ -3,13 +3,7 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     
-if (url.pathname === "/api/ai-test-image") {
-  try {
-    const result = await env.AI.run(
-      "@cf/black-forest-labs/flux-1-schnell",
-      {
-        prompt: "Cute fluffy cream white 3D cartoon character named Puffy, big turquoise eyes, peach inner floppy ears, tiny brown nose, turquoise backpack with a golden star, standing on a colorful magical cloud, adorable preschool animation, high quality, vertical composition"
-      }
+
     );
 
     const binary = Uint8Array.from(
@@ -89,11 +83,7 @@ if (url.pathname === "/api/ai-test-image") {
       }
     }
 
-    if (url.pathname === "/api/ai-test") {
-  return Response.json({
-    aiConfigured: Boolean(env.AI),
-    message: "Workers AI bağlantı kontrolü"
-  });
+
 }
 
     // 1. Sunucu sağlık kontrolü
