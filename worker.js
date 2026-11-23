@@ -2,6 +2,64 @@
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+    
+    // Puffy görsel üretim API'si
+    if (url.pathname === "/api/generate-image") {
+      if (request.method !== "POST") {
+        return Response.json(
+          { success: false, error: "Yalnızca POST isteği kabul edilir." },
+          { status: 405 }
+        );
+      }
+
+      if (!env.AI) {
+        return Response.json(
+          { success: false, error: "Workers AI bağlantısı bulunamadı." },
+          { status: 500 }
+        );
+      }
+
+      try {
+        const body = await request.json();
+        const prompt = String(body.prompt || "").trim();
+
+        if (!prompt || prompt.length > 2048) {
+          return Response.json(
+            {
+              success: false,
+              error: "Görsel açıklaması boş veya 2048 karakterden uzun."
+            },
+            { status: 400 }
+          );
+        }
+
+        const result = await env.AI.run(
+          "@cf/black-forest-labs/flux-1-schnell",
+          {
+            prompt: prompt
+          }
+        );
+
+        if (!result.image) {
+          throw new Error("Görsel modeli boş yanıt döndürdü.");
+        }
+
+        return Response.json({
+          success: true,
+          image: "data:image/jpeg;base64," + result.image
+        });
+
+      } catch (error) {
+        return Response.json(
+          {
+            success: false,
+            error: "Görsel üretilemedi: " + error.message
+          },
+          { status: 502 }
+        );
+      }
+    }
+
     if (url.pathname === "/api/ai-test") {
   return Response.json({
     aiConfigured: Boolean(env.AI),
