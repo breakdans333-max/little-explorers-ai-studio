@@ -2,6 +2,12 @@
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+    if (url.pathname === "/api/ai-test") {
+  return Response.json({
+    aiConfigured: Boolean(env.AI),
+    message: "Workers AI bağlantı kontrolü"
+  });
+}
 
     // 1. Sunucu sağlık kontrolü
     if (url.pathname === "/api/health") {
