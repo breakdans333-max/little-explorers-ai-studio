@@ -24,7 +24,11 @@ export default {
           { status: 405 }
         );
       }
-
+      return Response.json({
+  success: true,
+  script: "TEST SONUCU: GROQ_API_KEY = " +
+    String(Boolean(env.GROQ_API_KEY))
+});
       // API anahtarı kontrolü
       if (!env.GROQ_API_KEY) {
         return Response.json(
