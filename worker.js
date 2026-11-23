@@ -39,85 +39,99 @@ export default {
           );
         }
 
-        const prompt = `
-Little Explorers adlı çocuk eğitim kanalı için
-3-6 yaş grubuna uygun bir YouTube Shorts senaryosu yaz.
 
-Konu: ${topic}
-Dil: ${language}
-Süre: ${duration} saniye
-Ek not: ${details}
+const prompt = `
+Sen Little Explorers adlı çocuk eğitim kanalının
+profesyonel senaryo ve yaratıcı içerik yönetmenisin.
 
-Ana karakter Puffy:
-Krem renkli tüylü, turkuaz gözlü,
-turkuaz sırt çantalı sevimli bir karakter.
+GÖREV:
+Verilen konuya göre tamamen otomatik,
+özgün ve eğitici bir YouTube Shorts senaryosu oluştur.
 
-Kurallar:
-- Beş sahne oluştur.
-- Sahnelerin zaman aralıkları toplam süreyi tam karşılasın.
-- Her sahne için görsel açıklaması yaz.
-- Türkçe ve İngilizce kısa konuşmalar ekle.
-- Basit, doğru ve yaşa uygun bilgiler kullan.
-- Korkutucu, tehlikeli veya uygunsuz içerik kullanma.
+KONU: ${topic}
+DİL: ${language}
+SÜRE: ${duration} saniye
+EK NOT: ${details || "Yaratıcı kararları kendin ver."}
+
+HEDEF KİTLE:
+3-6 yaş çocuklar.
+
+ANA KARAKTER PUFFY:
+- Krem renkli, yumuşak tüylü.
+- Büyük turkuaz gözlü.
+- Sevimli, hareketli ve meraklı.
+- Turkuaz sırt çantasında altın yıldız bulunur.
+- Bütün sahnelerde aynı karakter görünümünü koru.
+
+OTOMATİK SENARYO KURALLARI:
+- Konuya uygun öğretici nesneleri kendin seç.
+- Her sahnede farklı ve anlamlı bir olay oluştur.
+- Genel ve tekrarlayan cümleler kullanma.
+- Çocuklara basit sorular sor.
+- Doğru cevabı açık ve eğlenceli şekilde öğret.
+- Türkçe ve İngilizce kısa konuşmalar yaz.
+- Bilgiler bilimsel olarak doğru ve yaşa uygun olsun.
+- Korkutucu veya tehlikeli içerik oluşturma.
 - Çocuklardan kişisel bilgi isteme.
-- Çıktıyı Türkçe başlıklarla düzenle.
-- Yalnızca senaryoyu döndür.
+- Her sahnenin görselini ayrıntılı tarif et.
+- 3D çizgi film estetiğini koru.
+- Sahne sürelerinin toplamı tam olarak ${duration} saniye olsun.
+- Beş sahne oluştur.
+
+ÇIKTI FORMATI:
+
+VİDEO BAŞLIĞI:
+VİDEONUN EĞİTİCİ AMACI:
+YOUTUBE AÇIKLAMASI:
+ETİKETLER:
+
+SAHNE 1:
+Zaman:
+Görsel:
+Puffy'nin hareketi:
+Türkçe konuşma:
+English dialogue:
+Ses ve efekt:
+
+SAHNE 2:
+Zaman:
+Görsel:
+Puffy'nin hareketi:
+Türkçe konuşma:
+English dialogue:
+Ses ve efekt:
+
+SAHNE 3:
+Zaman:
+Görsel:
+Puffy'nin hareketi:
+Türkçe konuşma:
+English dialogue:
+Ses ve efekt:
+
+SAHNE 4:
+Zaman:
+Görsel:
+Puffy'nin hareketi:
+Türkçe konuşma:
+English dialogue:
+Ses ve efekt:
+
+SAHNE 5:
+Zaman:
+Görsel:
+Puffy'nin hareketi:
+Türkçe konuşma:
+English dialogue:
+Ses ve efekt:
+
+KAPANIŞ:
+Eğlenceli ve kısa bir veda oluştur.
+
+GÖRSEL ÜRETİM TALİMATI:
+Her sahne için ayrı, karakter tutarlılığını
+koruyan, dikey 9:16 formatında kullanılabilecek
+ayrıntılı bir görsel üretim açıklaması hazırla.
+
+Yalnızca istenen senaryo çıktısını ver.
 `;
-
-        const response = await fetch(
-          "https://api.groq.com/openai/v1/chat/completions",
-          {
-            method: "POST",
-            headers: {
-              "Authorization": `Bearer ${env.GROQ_API_KEY}`,
-              "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-              model: "llama-3.3-70b-versatile",
-              messages: [
-                {
-                  role: "system",
-                  content: "Sen çocuklara yönelik eğitim içerikleri hazırlayan dikkatli bir senaristsin."
-                },
-                {
-                  role: "user",
-                  content: prompt
-                }
-              ],
-              temperature: 0.7,
-              max_completion_tokens: 2500
-            })
-          }
-        );
-
-        const result = await response.json();
-
-        if (!response.ok) {
-          return Response.json(
-            { error: "Groq isteği başarısız oldu. API ayarlarını kontrol et." },
-            { status: 502 }
-          );
-        }
-
-        const script = result.choices?.[0]?.message?.content;
-
-        if (!script) {
-          return Response.json(
-            { error: "AI boş yanıt döndürdü." },
-            { status: 502 }
-          );
-        }
-
-        return Response.json({ success: true, script });
-
-      } catch (error) {
-        return Response.json(
-          { error: "İstek işlenemedi. Girdi bilgilerini kontrol et." },
-          { status: 400 }
-        );
-      }
-    }
-
-    return env.ASSETS.fetch(request);
-  }
-};
