@@ -5,8 +5,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Little Explorers AI Studio</title>
+
   <style>
     * { box-sizing: border-box; }
+
     body {
       margin: 0;
       font-family: Arial, sans-serif;
@@ -14,10 +16,24 @@
       color: #fff;
       padding: 24px;
     }
-    .container { max-width: 850px; margin: auto; }
-    header { text-align: center; padding: 35px 10px; }
-    h1 { color: #65dfcf; font-size: 30px; }
+
+    .container {
+      max-width: 850px;
+      margin: auto;
+    }
+
+    header {
+      text-align: center;
+      padding: 35px 10px;
+    }
+
+    h1 {
+      color: #65dfcf;
+      font-size: 30px;
+    }
+
     header p { color: #c3d0df; }
+
     .panel {
       background: #1d2a3d;
       border: 1px solid #34465d;
@@ -25,8 +41,17 @@
       padding: 22px;
       margin-bottom: 18px;
     }
-    h2 { color: #ffd166; font-size: 20px; }
-    label { display: block; margin: 16px 0 8px; }
+
+    h2 {
+      color: #ffd166;
+      font-size: 20px;
+    }
+
+    label {
+      display: block;
+      margin: 16px 0 8px;
+    }
+
     input, select, textarea {
       width: 100%;
       padding: 13px;
@@ -36,6 +61,7 @@
       color: white;
       font-size: 16px;
     }
+
     button {
       width: 100%;
       padding: 15px;
@@ -46,13 +72,46 @@
       color: #10202b;
       font-size: 16px;
       font-weight: bold;
+      cursor: pointer;
     }
-    #result { color: #65dfcf; line-height: 1.6; }
-    footer { text-align: center; color: #91a0b2; padding: 20px; }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: wait;
+    }
+
+    #result {
+      color: #65dfcf;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    #imageStatus {
+      color: #65dfcf;
+      line-height: 1.5;
+    }
+
+    #generatedImage {
+      display: none;
+      width: 100%;
+      max-width: 500px;
+      margin: 20px auto 0;
+      border-radius: 14px;
+      border: 2px solid #65dfcf;
+    }
+
+    footer {
+      text-align: center;
+      color: #91a0b2;
+      padding: 20px;
+    }
   </style>
 </head>
+
 <body>
   <main class="container">
+
     <header>
       <h1>Little Explorers AI Studio</h1>
       <p>Puffy ile eğlenceli ve eğitici dünyalar keşfet!</p>
@@ -83,7 +142,9 @@
       <textarea id="details" rows="3"
         placeholder="Videoda neler olsun?"></textarea>
 
-      <button onclick="createProject()">Proje taslağı oluştur</button>
+      <button id="projectButton" onclick="createProject()">
+        Proje taslağı oluştur
+      </button>
     </section>
 
     <section class="panel">
@@ -91,52 +152,113 @@
       <p id="result">Henüz proje oluşturulmadı.</p>
     </section>
 
+    <section class="panel">
+      <h2>Puffy görsel stüdyosu</h2>
+
+      <label>Görsel açıklaması</label>
+
+      <textarea id="imagePrompt" rows="5">Cute fluffy cream white 3D cartoon character named Puffy, big turquoise eyes, peach inner floppy ears, tiny brown nose, turquoise backpack with a golden star, standing in a colorful magical world, adorable preschool animation, high quality, vertical 9:16 composition. Keep the same character appearance.</textarea>
+
+      <button id="imageButton" onclick="generateImage()">
+        Puffy görseli oluştur
+      </button>
+
+      <p id="imageStatus">Henüz görsel oluşturulmadı.</p>
+
+      <img id="generatedImage" alt="Puffy tarafından oluşturulan görsel">
+    </section>
+
     <footer>Little Explorers © 2026</footer>
+
   </main>
 
+  <script>
+    async function createProject() {
+      const topic = document.getElementById("topic").value.trim();
+      const language = document.getElementById("language").value;
+      const duration = parseInt(document.getElementById("duration").value);
+      const details = document.getElementById("details").value.trim();
+      const result = document.getElementById("result");
+      const button = document.getElementById("projectButton");
 
+      if (!topic) {
+        result.textContent = "Lütfen video konusunu yaz.";
+        return;
+      }
 
+      button.disabled = true;
+      result.textContent = "Puffy senaryonu hazırlıyor...";
 
-<script>
-async function createProject() {
-  const topic = document.getElementById("topic").value.trim();
-  const language = document.getElementById("language").value;
-  const duration = parseInt(document.getElementById("duration").value);
-  const details = document.getElementById("details").value.trim();
-  const result = document.getElementById("result");
+      try {
+        const response = await fetch("/api/generate", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            topic,
+            language,
+            duration,
+            details
+          })
+        });
 
-  if (!topic) {
-    result.textContent = "Lütfen video konusunu yaz.";
-    return;
-  }
+        const data = await response.json();
 
-  result.textContent = "Puffy senaryonu hazırlıyor...";
+        if (!response.ok || !data.success) {
+          throw new Error(data.error || "Senaryo oluşturulamadı.");
+        }
 
-  try {
-    const response = await fetch("/api/generate", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        topic,
-        language,
-        duration,
-        details
-      })
-    });
+        result.textContent = data.script;
 
-    const data = await response.json();
-
-    if (!response.ok || !data.success) {
-      throw new Error(data.error || "Senaryo oluşturulamadı.");
+      } catch (error) {
+        result.textContent = "Bağlantı hatası: " + error.message;
+      } finally {
+        button.disabled = false;
+      }
     }
 
-    result.textContent = data.script;
+    async function generateImage() {
+      const prompt = document.getElementById("imagePrompt").value.trim();
+      const status = document.getElementById("imageStatus");
+      const button = document.getElementById("imageButton");
+      const image = document.getElementById("generatedImage");
 
-  } catch (error) {
-    result.textContent =
-      "Bağlantı hatası: " + error.message;
-  }
-}
-</script>
+      if (!prompt) {
+        status.textContent = "Lütfen görsel açıklaması yaz.";
+        return;
+      }
+
+      button.disabled = true;
+      status.textContent = "Puffy'nin görseli hazırlanıyor...";
+      image.style.display = "none";
+
+      try {
+        const response = await fetch("/api/generate-image", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ prompt })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || !data.success || !data.image) {
+          throw new Error(data.error || "Görsel oluşturulamadı.");
+        }
+
+        image.src = data.image;
+        image.style.display = "block";
+        status.textContent = "Puffy görseli başarıyla oluşturuldu!";
+
+      } catch (error) {
+        status.textContent = "Görsel üretim hatası: " + error.message;
+      } finally {
+        button.disabled = false;
+      }
+    }
+  </script>
+
+</body>
+</html>
