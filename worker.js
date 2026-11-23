@@ -3,6 +3,35 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     
+if (url.pathname === "/api/ai-test-image") {
+  try {
+    const result = await env.AI.run(
+      "@cf/black-forest-labs/flux-1-schnell",
+      {
+        prompt: "Cute fluffy cream white 3D cartoon character named Puffy, big turquoise eyes, peach inner floppy ears, tiny brown nose, turquoise backpack with a golden star, standing on a colorful magical cloud, adorable preschool animation, high quality, vertical composition"
+      }
+    );
+
+    const binary = Uint8Array.from(
+      atob(result.image),
+      c => c.charCodeAt(0)
+    );
+
+    return new Response(binary, {
+      headers: {
+        "Content-Type": "image/jpeg"
+      }
+    });
+
+  } catch (error) {
+    return Response.json({
+      success: false,
+      error: error.message
+    }, { status: 502 });
+  }
+}
+
+    
     // Puffy görsel üretim API'si
     if (url.pathname === "/api/generate-image") {
       if (request.method !== "POST") {
