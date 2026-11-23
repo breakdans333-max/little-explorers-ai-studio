@@ -8,11 +8,99 @@ export default {
       return Response.json({
         worker: "active",
         groqConfigured: Boolean(env.GROQ_API_KEY),
-        aiConfigured: Boolean(env.AI)
+        aiConfigured: Boolean(env.AI),
+        elevenLabsConfigured: Boolean(env.ELEVENLABS_API_KEY)
       });
     }
 
-    // 2. Tek sahne görseli üretimi
+    // 2. ElevenLabs seslerini listele
+    if (url.pathname === "/api/voices") {
+      if (request.method !== "GET") {
+        return Response.json(
+          { success: false, error: "Yalnızca GET isteği kabul edilir." },
+          { status: 405 }
+        );
+      }
+
+      if (!env.ELEVENLABS_API_KEY) {
+        return Response.json(
+          { success: false, error: "ElevenLabs API anahtarı yapılandırılmamış." },
+          { status: 500 }
+        );
+      }
+
+      try {
+        const response = await fetch(
+          "https://api.elevenlabs.io/v2/voices?page_size=100",
+          {
+            method: "GET",
+            headers: {
+              "xi-api-key": env.ELEVENLABS_API_KEY
+            }
+          }
+        );
+
+        const responseText = await response.text();
+        let result;
+
+        try {
+          result = JSON.parse(responseText);
+        } catch {
+          return Response.json(
+            { success: false, error: "ElevenLabs geçerli bir yanıt döndürmedi." },
+            { status: 502 }
+          );
+        }
+
+        if (!response.ok) {
+          return Response.json(
+            {
+              success: false,
+              error: result.detail?.message ||
+                result.detail ||
+                result.message ||
+                "ElevenLabs ses listesi alınamadı.",
+              providerStatus: response.status
+            },
+            { status: 502 }
+          );
+        }
+
+        const voices = (result.voices || []).map(voice => ({
+          voice_id: voice.voice_id,
+          name: voice.name,
+          category: voice.category,
+          description: voice.description || "",
+          labels: voice.labels || {},
+          preview_url: voice.preview_url || "",
+          verified_languages: (voice.verified_languages || []).map(item => ({
+            language: item.language,
+            model_id: item.model_id,
+            accent: item.accent,
+            locale: item.locale
+          }))
+        }));
+
+        return Response.json({
+          success: true,
+          count: voices.length,
+          hasMore: Boolean(result.has_more),
+          nextPageToken: result.next_page_token || null,
+          voices
+        });
+
+      } catch (error) {
+        return Response.json(
+          {
+            success: false,
+            error: "Ses listesi alınamadı: " + error.message
+          },
+          { status: 500 }
+        );
+      }
+    }
+
+    // 3. Tek sahne görseli üretimi
     if (url.pathname === "/api/generate-image") {
       if (request.method !== "POST") {
         return Response.json(
@@ -64,7 +152,7 @@ export default {
       }
     }
 
-    // 3. Otomatik senaryo ve sahne oluşturma
+    // 4. Otomatik senaryo ve sahne oluşturma
     if (url.pathname === "/api/generate") {
       if (request.method !== "POST") {
         return Response.json(
@@ -294,7 +382,7 @@ JSON dışında hiçbir şey yazma.
       }
     }
 
-    // 4. Diğer istekleri web paneline yönlendir
+    // 5. Diğer istekleri web paneline yönlendir
     return env.ASSETS.fetch(request);
   }
 };
