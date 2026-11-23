@@ -96,8 +96,9 @@
 
 
 
+
 <script>
-function createProject() {
+async function createProject() {
   const topic = document.getElementById("topic").value.trim();
   const language = document.getElementById("language").value;
   const duration = parseInt(document.getElementById("duration").value);
@@ -109,53 +110,33 @@ function createProject() {
     return;
   }
 
-  const sceneNames = [
-    "Puffy'nin eğlenceli girişi",
-    "Konunun tanıtılması",
-    "Birlikte keşif ve soru",
-    "Öğrenme ve doğru cevap",
-    "Eğlenceli kapanış"
-  ];
+  result.textContent = "Puffy senaryonu hazırlıyor...";
 
-  const sceneTexts = [
-    ["Merhaba küçük kaşifler!", "Hello, little explorers!"],
-    ["Haydi birlikte keşfedelim!", "Let's explore together!"],
-    ["Sence bu nedir?", "What do you think this is?"],
-    ["Harika! Birlikte öğrendik!", "Wonderful! We learned together!"],
-    ["Bir sonraki keşifte görüşürüz!", "See you on our next adventure!"]
-  ];
+  try {
+    const response = await fetch("/api/generate", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        topic,
+        language,
+        duration,
+        details
+      })
+    });
 
-  const total = duration;
-  const sceneCount = 5;
-  const base = Math.floor(total / sceneCount);
-  const remainder = total % sceneCount;
+    const data = await response.json();
 
-  let output = "LITTLE EXPLORERS - VİDEO PLANI\n";
-  output += "================================\n";
-  output += "Konu: " + topic + "\n";
-  output += "Dil: " + language + "\n";
-  output += "Hedef yaş: 3-6\n";
-  output += "Toplam süre: " + total + " saniye\n\n";
-  output += "SAHNE PLANI\n\n";
+    if (!response.ok || !data.success) {
+      throw new Error(data.error || "Senaryo oluşturulamadı.");
+    }
 
-  let start = 0;
+    result.textContent = data.script;
 
-  for (let i = 0; i < sceneCount; i++) {
-    const length = base + (i < remainder ? 1 : 0);
-    const end = start + length;
-
-    output += "SAHNE " + (i + 1) + " | " + start + "-" + end + " saniye\n";
-    output += "Görsel: " + sceneNames[i] + ". " + topic + " konusuna uygun Puffy animasyonu.\n";
-    output += "Türkçe: " + sceneTexts[i][0] + "\n";
-    output += "English: " + sceneTexts[i][1] + "\n\n";
-
-    start = end;
+  } catch (error) {
+    result.textContent =
+      "Bağlantı hatası: " + error.message;
   }
-
-  output += "EK NOTLAR\n";
-  output += details || "Neşeli, güvenli ve eğitici bir anlatım kullan.";
-  output += "\n\nBu çıktı senaryo taslağıdır. Henüz AI video üretimi yapılmamıştır.";
-
-  result.textContent = output;
 }
 </script>
