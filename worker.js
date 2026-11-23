@@ -2,175 +2,147 @@
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
-    
-if (url.pathname === "/api/health") {
-  return Response.json({
-    worker: "active",
-    groqConfigured: Boolean(env.GROQ_API_KEY)
-  });
-}
+
+    // 1. Sunucu sağlık kontrolü
+    if (url.pathname === "/api/health") {
+      return Response.json({
+        worker: "active",
+        groqConfigured: Boolean(env.GROQ_API_KEY)
+      });
+    }
+
+    // 2. Senaryo oluşturma
     if (url.pathname === "/api/generate") {
+
+      // Yalnızca POST isteği kabul edilir
       if (request.method !== "POST") {
         return Response.json(
-      
-if (request.method !== "POST") {
-  return Response.json(
-    { success: false, error: "Yalnızca POST isteği kabul edilir." },
-    { status: 405 }
-  );
-}
-
-return Response.json({
-  success: true,
-  script: "Tanılama sonucu: GROQ_API_KEY = " +
-    String(Boolean(env.GROQ_API_KEY))
-});
-
-if (!env.GROQ_API_KEY) {
-  return Response.json(
-    { success: false, error: "Groq API anahtarı yapılandırılmamış." },
-    { status: 500 }
-  );
-}
-
+          {
+            success: false,
+            error: "Yalnızca POST isteği kabul edilir."
+          },
+          { status: 405 }
+        );
       }
 
+      // API anahtarı kontrolü
       if (!env.GROQ_API_KEY) {
         return Response.json(
-          { success: false, error: "Groq API anahtarı yapılandırılmamış." },
+          {
+            success: false,
+            error: "Groq API anahtarı yapılandırılmamış."
+          },
           { status: 500 }
         );
       }
 
       try {
-        const data = await request.json();
+        // Kullanıcıdan gelen veriler
+        const body = await request.json();
 
-        const topic = String(data.topic || "").trim();
-        const duration = Number(data.duration);
-        const language = String(data.language || "Türkçe + English");
-        const details = String(data.details || "").slice(0, 500);
+        const topic = String(body.topic || "").trim();
+        const language = String(body.language || "Turkish");
+        const duration = Number(body.duration || 30);
+        const details = String(body.details || "").trim();
 
-        if (!topic || topic.length > 150) {
+        if (!topic) {
           return Response.json(
-            { success: false, error: "Geçerli bir video konusu gir." },
+            {
+              success: false,
+              error: "Lütfen video konusunu yaz."
+            },
             { status: 400 }
           );
         }
 
         if (![25, 30, 45, 60].includes(duration)) {
           return Response.json(
-            { success: false, error: "Video süresi geçersiz." },
+            {
+              success: false,
+              error: "Video süresi 25, 30, 45 veya 60 saniye olmalıdır."
+            },
             { status: 400 }
           );
         }
 
+        // Puffy için senaryo talimatları
         const prompt = `
-Sen Little Explorers adlı çocuk eğitim kanalının
-profesyonel senaryo ve yaratıcı içerik yönetmenisin.
+Sen Little Explorers adlı çocuk eğitim kanalının senaryo yazarısın.
 
-GÖREV:
-Verilen konuya göre tamamen otomatik,
-özgün ve eğitici bir YouTube Shorts senaryosu oluştur.
+ANA KARAKTER:
+Puffy adında sevimli bir 3D çizgi film karakteri.
+- Krem/beyaz yumuşak tüylü vücut
+- Büyük turkuaz gözler
+- Şeftali tonlarında kulak içleri
+- Küçük kahverengi burun
+- Turkuaz sırt çantası ve üzerinde altın yıldız
 
-KONU: ${topic}
-DİL: ${language}
-SÜRE: ${duration} saniye
-EK NOT: ${details || "Yaratıcı kararları kendin ver."}
+Puffy'nin görünüşünü bütün sahnelerde aynı tut.
 
 HEDEF KİTLE:
-3-6 yaş çocuklar.
+3-6 yaş arası çocuklar.
 
-ANA KARAKTER PUFFY:
-- Krem renkli, yumuşak tüylü.
-- Büyük turkuaz gözlü.
-- Sevimli, hareketli ve meraklı.
-- Turkuaz sırt çantasında altın yıldız bulunur.
-- Bütün sahnelerde aynı karakter görünümünü koru.
+VİDEO BİLGİLERİ:
+Konu: ${topic}
+Dil: ${language}
+Süre: ${duration} saniye
+Ek bilgiler: ${details || "Ek bilgi yok."}
 
-OTOMATİK SENARYO KURALLARI:
-- Konuya uygun öğretici nesneleri kendin seç.
-- Her sahnede farklı ve anlamlı bir olay oluştur.
-- Genel ve tekrarlayan cümleler kullanma.
-- Çocuklara basit sorular sor.
-- Doğru cevabı açık ve eğlenceli şekilde öğret.
-- Türkçe ve İngilizce kısa konuşmalar yaz.
-- Bilgiler bilimsel olarak doğru ve yaşa uygun olsun.
-- Korkutucu veya tehlikeli içerik oluşturma.
-- Çocuklardan kişisel bilgi isteme.
-- Her sahnenin görselini ayrıntılı tarif et.
-- 3D çizgi film estetiğini koru.
-- Dikey 9:16 video formatını dikkate al.
-- Sahne sürelerinin toplamı tam olarak ${duration} saniye olsun.
-- Tam olarak beş sahne oluştur.
-- Konuya uygun nesne ve örnekleri kendin belirle.
-- Her sahnede Puffy'nin hareketini açıkça anlat.
+VİDEO KURALLARI:
+- Dikey 9:16 YouTube Shorts formatı.
+- Renkli, sevimli, kaliteli 3D animasyon.
+- Basit, eğlenceli ve öğretici anlatım.
+- Çocukların kolay anlayacağı kısa cümleler.
+- İlk 3 saniyede dikkat çekici bir giriş.
+- Puffy videonun ana karakteri olsun.
+- Her sahne için görsel üretim talimatı yaz.
+- Her sahne için kamera hareketi ve animasyon belirt.
+- Seslendirme metni ve ses efektleri ekle.
+- Türkçe ve İngilizce içerik hazırla.
+- Video süresini sahnelere böl ve toplam süreyi aşma.
 
-ÇIKTI FORMATI:
+ÇIKTIYI ŞU DÜZENDE HAZIRLA:
 
-VİDEO BAŞLIĞI:
-VİDEONUN EĞİTİCİ AMACI:
-YOUTUBE AÇIKLAMASI:
-ETİKETLER:
+1. VİDEO BAŞLIĞI
+Türkçe ve İngilizce.
 
-SAHNE 1:
-Zaman:
-Görsel:
-Puffy'nin hareketi:
-Türkçe konuşma:
-English dialogue:
-Ses ve efekt:
-Görsel üretim açıklaması:
+2. DİKKAT ÇEKİCİ GİRİŞ
+İlk 1-3 saniyelik açılış.
 
-SAHNE 2:
-Zaman:
-Görsel:
-Puffy'nin hareketi:
-Türkçe konuşma:
-English dialogue:
-Ses ve efekt:
-Görsel üretim açıklaması:
+3. SAHNE SAHNE SENARYO
+Her sahnede şunlar bulunsun:
+- Sahne numarası
+- Başlangıç ve bitiş zamanı
+- Görsel üretim promptu
+- Puffy'nin hareketleri ve mimikleri
+- Kamera hareketi
+- Türkçe seslendirme
+- İngilizce seslendirme
+- Ekranda görünecek Türkçe ve İngilizce yazılar
+- Ses ve efekt önerileri
 
-SAHNE 3:
-Zaman:
-Görsel:
-Puffy'nin hareketi:
-Türkçe konuşma:
-English dialogue:
-Ses ve efekt:
-Görsel üretim açıklaması:
+4. KAPANIŞ
+Çocuklara yönelik sevimli bir kapanış ve kısa etkileşim çağrısı.
 
-SAHNE 4:
-Zaman:
-Görsel:
-Puffy'nin hareketi:
-Türkçe konuşma:
-English dialogue:
-Ses ve efekt:
-Görsel üretim açıklaması:
+5. YOUTUBE AÇIKLAMASI
+Türkçe ve İngilizce.
 
-SAHNE 5:
-Zaman:
-Görsel:
-Puffy'nin hareketi:
-Türkçe konuşma:
-English dialogue:
-Ses ve efekt:
-Görsel üretim açıklaması:
+6. ETİKETLER
+YouTube Shorts için uygun etiketler.
 
-KAPANIŞ:
-Eğlenceli ve kısa bir veda oluştur.
+7. KALİTE KONTROL
+Puffy karakter tutarlılığı, yaşa uygunluk, bilgi doğruluğu ve toplam video süresini kontrol et.
 
-ÖNEMLİ:
-Yalnızca istenen senaryo çıktısını ver.
-Senaryo dışında açıklama ekleme.
+Yalnızca senaryoyu üret. Açıklama veya senaryo dışı yorum ekleme.
 `;
 
+        // Groq API isteği
         const response = await fetch(
           "https://api.groq.com/openai/v1/chat/completions",
           {
             method: "POST",
             headers: {
-              "Authorization": `Bearer ${env.GROQ_API_KEY}`,
+              "Authorization": "Bearer " + env.GROQ_API_KEY,
               "Content-Type": "application/json"
             },
             body: JSON.stringify({
@@ -178,7 +150,7 @@ Senaryo dışında açıklama ekleme.
               messages: [
                 {
                   role: "system",
-                  content: "Sen çocuklara yönelik güvenli, yaratıcı ve eğitici içerikler hazırlayan profesyonel bir senaristsin."
+                  content: "Sen profesyonel bir çocuk eğitici video senaristisin."
                 },
                 {
                   role: "user",
@@ -191,6 +163,7 @@ Senaryo dışında açıklama ekleme.
           }
         );
 
+        // Groq yanıtını oku
         const responseText = await response.text();
 
         let result;
@@ -201,12 +174,13 @@ Senaryo dışında açıklama ekleme.
           return Response.json(
             {
               success: false,
-              error: "Groq yanıtı okunamadı."
+              error: "Groq geçerli bir JSON yanıtı döndürmedi."
             },
             { status: 502 }
           );
         }
 
+        // API hata kontrolü
         if (!response.ok) {
           const groqError =
             result.error?.message || "Bilinmeyen Groq API hatası.";
@@ -220,7 +194,9 @@ Senaryo dışında açıklama ekleme.
           );
         }
 
-        const script = result.choices?.[0]?.message?.content;
+        // Senaryo metnini al
+        const script =
+          result.choices?.[0]?.message?.content;
 
         if (!script) {
           return Response.json(
@@ -232,9 +208,10 @@ Senaryo dışında açıklama ekleme.
           );
         }
 
+        // Başarılı yanıt
         return Response.json({
           success: true,
-          script
+          script: script
         });
 
       } catch (error) {
@@ -248,6 +225,7 @@ Senaryo dışında açıklama ekleme.
       }
     }
 
+    // 3. Diğer istekleri web paneline yönlendir
     return env.ASSETS.fetch(request);
   }
 };
