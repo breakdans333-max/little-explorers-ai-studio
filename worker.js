@@ -3,7 +3,16 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
 
-    // 1. Puffy görsel üretim API'si
+    // 1. Sunucu kontrolü
+    if (url.pathname === "/api/health") {
+      return Response.json({
+        worker: "active",
+        groqConfigured: Boolean(env.GROQ_API_KEY),
+        aiConfigured: Boolean(env.AI)
+      });
+    }
+
+    // 2. Tek sahne görseli üretimi
     if (url.pathname === "/api/generate-image") {
       if (request.method !== "POST") {
         return Response.json(
@@ -25,19 +34,14 @@ export default {
 
         if (!prompt || prompt.length > 2048) {
           return Response.json(
-            {
-              success: false,
-              error: "Görsel açıklaması boş veya 2048 karakterden uzun."
-            },
+            { success: false, error: "Görsel açıklaması boş veya çok uzun." },
             { status: 400 }
           );
         }
 
         const result = await env.AI.run(
           "@cf/black-forest-labs/flux-1-schnell",
-          {
-            prompt: prompt
-          }
+          { prompt }
         );
 
         if (!result.image) {
@@ -60,33 +64,18 @@ export default {
       }
     }
 
-    // 2. Sunucu sağlık kontrolü
-    if (url.pathname === "/api/health") {
-      return Response.json({
-        worker: "active",
-        groqConfigured: Boolean(env.GROQ_API_KEY)
-      });
-    }
-
-    // 3. Senaryo oluşturma
+    // 3. Otomatik senaryo ve sahne oluşturma
     if (url.pathname === "/api/generate") {
-
       if (request.method !== "POST") {
         return Response.json(
-          {
-            success: false,
-            error: "Yalnızca POST isteği kabul edilir."
-          },
+          { success: false, error: "Yalnızca POST isteği kabul edilir." },
           { status: 405 }
         );
       }
 
       if (!env.GROQ_API_KEY) {
         return Response.json(
-          {
-            success: false,
-            error: "Groq API anahtarı yapılandırılmamış."
-          },
+          { success: false, error: "Groq API anahtarı yapılandırılmamış." },
           { status: 500 }
         );
       }
@@ -95,98 +84,99 @@ export default {
         const body = await request.json();
 
         const topic = String(body.topic || "").trim();
-        const language = String(body.language || "Turkish");
+        const language = String(body.language || "Türkçe + English");
         const duration = Number(body.duration || 30);
         const details = String(body.details || "").trim();
 
         if (!topic) {
           return Response.json(
-            {
-              success: false,
-              error: "Lütfen video konusunu yaz."
-            },
+            { success: false, error: "Lütfen video konusunu yaz." },
             { status: 400 }
           );
         }
 
         if (![25, 30, 45, 60].includes(duration)) {
           return Response.json(
-            {
-              success: false,
-              error: "Video süresi 25, 30, 45 veya 60 saniye olmalıdır."
-            },
+            { success: false, error: "Geçersiz video süresi." },
             { status: 400 }
           );
         }
 
-        const prompt = `
-Sen Little Explorers adlı çocuk eğitim kanalının senaryo yazarısın.
+        const sceneCount = duration <= 30 ? 5 : duration === 45 ? 6 : 8;
 
-ANA KARAKTER:
-Puffy adında sevimli bir 3D çizgi film karakteri.
-- Krem/beyaz yumuşak tüylü vücut
+        const prompt = `
+Sen Little Explorers çocuk eğitim kanalının yaratıcı yönetmenisin.
+
+ANA KARAKTER PUFFY:
+- Krem beyaz, yumuşak ve kabarık tüylü vücut
 - Büyük turkuaz gözler
 - Şeftali tonlarında kulak içleri
 - Küçük kahverengi burun
-- Turkuaz sırt çantası ve üzerinde altın yıldız
+- Turkuaz sırt çantası
+- Çantanın üzerinde altın yıldız
 
-Puffy'nin görünüşünü bütün sahnelerde aynı tut.
+ÇOK ÖNEMLİ:
+Puffy'nin görünüşü bütün sahnelerde aynı olmalı.
+Her görsel promptunda bu karakter özelliklerini tekrar belirt.
+Puffy'nin kıyafetini, rengini, yüzünü veya çantasını değiştirme.
 
-HEDEF KİTLE:
+HEDEF:
 3-6 yaş arası çocuklar.
 
 VİDEO BİLGİLERİ:
 Konu: ${topic}
 Dil: ${language}
 Süre: ${duration} saniye
-Ek bilgiler: ${details || "Ek bilgi yok."}
+Sahne sayısı: Tam olarak ${sceneCount}
+Ek bilgiler: ${details || "Yok"}
 
-VİDEO KURALLARI:
-- Dikey 9:16 YouTube Shorts formatı.
-- Renkli, sevimli, kaliteli 3D animasyon.
-- Basit, eğlenceli ve öğretici anlatım.
-- Çocukların kolay anlayacağı kısa cümleler.
-- İlk 3 saniyede dikkat çekici bir giriş.
-- Puffy videonun ana karakteri olsun.
-- Her sahne için görsel üretim talimatı yaz.
-- Her sahne için kamera hareketi ve animasyon belirt.
-- Seslendirme metni ve ses efektleri ekle.
-- Türkçe ve İngilizce içerik hazırla.
-- Video süresini sahnelere böl ve toplam süreyi aşma.
+YARATICI KURALLAR:
+- Dikey 9:16 YouTube Shorts.
+- Sevimli, kaliteli 3D çizgi film estetiği.
+- Canlı ve uyumlu renkler.
+- Çocuklara uygun, güvenli ve eğitici içerik.
+- İlk sahne ilk 3 saniyede dikkat çekmeli.
+- Her sahnede Puffy görünmeli.
+- Her sahne farklı bir ortam veya aksiyon içermeli.
+- Görsellerde yazı, altyazı, logo veya filigran bulunmamalı.
+- Görsel promptları İngilizce ve ayrıntılı olmalı.
+- Her sahne için hareket, kamera ve ses bilgisi ver.
+- Türkçe ve İngilizce seslendirme üret.
+- Sahne zamanları sıfırdan başlamalı, birbirini takip etmeli ve toplam süre tam ${duration} saniye olmalı.
+- Sahne sayısı tam olarak ${sceneCount} olmalı.
 
-ÇIKTIYI ŞU DÜZENDE HAZIRLA:
+YANITI SADECE GEÇERLİ JSON OLARAK VER.
+Markdown veya kod bloğu kullanma.
 
-1. VİDEO BAŞLIĞI
-Türkçe ve İngilizce.
+JSON ŞEMASI:
 
-2. DİKKAT ÇEKİCİ GİRİŞ
-İlk 1-3 saniyelik açılış.
+{
+  "title_tr": "Türkçe video başlığı",
+  "title_en": "English video title",
+  "duration": ${duration},
+  "scenes": [
+    {
+      "scene_number": 1,
+      "start": 0,
+      "end": 5,
+      "image_prompt": "Detailed English 3D cartoon image prompt. Include Puffy's complete fixed appearance.",
+      "motion": "Puffy's movement and facial expression",
+      "camera": "Camera movement",
+      "voice_tr": "Türkçe seslendirme",
+      "voice_en": "English narration",
+      "text_tr": "Türkçe ekran yazısı",
+      "text_en": "English screen text",
+      "sound_effect": "Sound effect"
+    }
+  ],
+  "description_tr": "Türkçe YouTube açıklaması",
+  "description_en": "English YouTube description",
+  "tags": ["#Shorts", "#LittleExplorers"]
+}
 
-3. SAHNE SAHNE SENARYO
-Her sahnede şunlar bulunsun:
-- Sahne numarası
-- Başlangıç ve bitiş zamanı
-- Görsel üretim promptu
-- Puffy'nin hareketleri ve mimikleri
-- Kamera hareketi
-- Türkçe seslendirme
-- İngilizce seslendirme
-- Ekranda görünecek Türkçe ve İngilizce yazılar
-- Ses ve efekt önerileri
-
-4. KAPANIŞ
-Çocuklara yönelik sevimli bir kapanış ve kısa etkileşim çağrısı.
-
-5. YOUTUBE AÇIKLAMASI
-Türkçe ve İngilizce.
-
-6. ETİKETLER
-YouTube Shorts için uygun etiketler.
-
-7. KALİTE KONTROL
-Puffy karakter tutarlılığı, yaşa uygunluk, bilgi doğruluğu ve toplam video süresini kontrol et.
-
-Yalnızca senaryoyu üret. Açıklama veya senaryo dışı yorum ekleme.
+Sahnelerin başlangıç ve bitiş zamanlarını doğru hesapla.
+Bütün sahneleri eksiksiz üret.
+JSON dışında hiçbir şey yazma.
 `;
 
         const response = await fetch(
@@ -199,10 +189,11 @@ Yalnızca senaryoyu üret. Açıklama veya senaryo dışı yorum ekleme.
             },
             body: JSON.stringify({
               model: "openai/gpt-oss-120b",
+              response_format: { type: "json_object" },
               messages: [
                 {
                   role: "system",
-                  content: "Sen profesyonel bir çocuk eğitici video senaristisin."
+                  content: "Sen profesyonel bir çocuk video senaristi ve yapılandırılmış JSON üreticisisin. Yalnızca geçerli JSON döndür."
                 },
                 {
                   role: "user",
@@ -210,56 +201,86 @@ Yalnızca senaryoyu üret. Açıklama veya senaryo dışı yorum ekleme.
                 }
               ],
               temperature: 0.7,
-              max_tokens: 3500
+              max_tokens: 6000
             })
           }
         );
 
         const responseText = await response.text();
-
         let result;
 
         try {
           result = JSON.parse(responseText);
         } catch {
           return Response.json(
-            {
-              success: false,
-              error: "Groq geçerli bir JSON yanıtı döndürmedi."
-            },
+            { success: false, error: "Groq geçerli bir yanıt döndürmedi." },
             { status: 502 }
           );
         }
 
         if (!response.ok) {
-          const groqError =
-            result.error?.message || "Bilinmeyen Groq API hatası.";
-
           return Response.json(
             {
               success: false,
-              error: "Groq API hatası: " + groqError
+              error: result.error?.message || "Groq API hatası."
             },
             { status: 502 }
           );
         }
 
-        const script =
-          result.choices?.[0]?.message?.content;
+        const content = result.choices?.[0]?.message?.content;
 
-        if (!script) {
+        if (!content) {
+          return Response.json(
+            { success: false, error: "AI boş yanıt döndürdü." },
+            { status: 502 }
+          );
+        }
+
+        let project;
+
+        try {
+          project = JSON.parse(content);
+        } catch {
+          return Response.json(
+            { success: false, error: "AI geçerli sahne JSON'u oluşturamadı." },
+            { status: 502 }
+          );
+        }
+
+        if (
+          !Array.isArray(project.scenes) ||
+          project.scenes.length !== sceneCount
+        ) {
           return Response.json(
             {
               success: false,
-              error: "AI boş yanıt döndürdü."
+              error: "AI beklenen sayıda sahne oluşturamadı. Lütfen yeniden dene."
             },
             { status: 502 }
           );
+        }
+
+        for (let i = 0; i < project.scenes.length; i++) {
+          const scene = project.scenes[i];
+
+          if (
+            !scene.image_prompt ||
+            String(scene.image_prompt).length > 2048
+          ) {
+            return Response.json(
+              {
+                success: false,
+                error: (i + 1) + ". sahnenin görsel açıklaması eksik veya çok uzun."
+              },
+              { status: 502 }
+            );
+          }
         }
 
         return Response.json({
           success: true,
-          script: script
+          project
         });
 
       } catch (error) {
@@ -268,7 +289,7 @@ Yalnızca senaryoyu üret. Açıklama veya senaryo dışı yorum ekleme.
             success: false,
             error: "İstek işlenemedi: " + error.message
           },
-          { status: 400 }
+          { status: 500 }
         );
       }
     }
