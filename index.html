@@ -74,7 +74,7 @@
       cursor: wait;
     }
 
-    #status {
+    #status, #voiceStatus {
       color: #65dfcf;
       line-height: 1.6;
       white-space: pre-wrap;
@@ -116,6 +116,11 @@
     }
 
     .scene strong { color: #ffd166; }
+
+    audio {
+      width: 100%;
+      margin-top: 18px;
+    }
 
     footer {
       text-align: center;
@@ -164,6 +169,28 @@
     </section>
 
     <section class="panel">
+      <h2>Anika Ses Stüdyosu</h2>
+      <p>Seçtiğimiz Anika karakter sesiyle Türkçe ve İngilizce ses üret.</p>
+
+      <label>Ses dili</label>
+      <select id="voiceLanguage">
+        <option value="tr">Türkçe</option>
+        <option value="en">English</option>
+      </select>
+
+      <label>Seslendirilecek metin</label>
+      <textarea id="voiceText" rows="4">Merhaba minik kaşifler! Ben Puffy. Haydi birlikte renkleri keşfedelim!</textarea>
+
+      <button id="voiceButton" onclick="generateVoice()">
+        Anika ile ses oluştur
+      </button>
+
+      <p id="voiceStatus">Henüz ses üretilmedi.</p>
+
+      <audio id="voicePlayer" controls style="display:none;"></audio>
+    </section>
+
+    <section class="panel">
       <h2>Üretim durumu</h2>
       <p id="status">Henüz üretim başlatılmadı.</p>
 
@@ -184,6 +211,78 @@
   </main>
 
   <script>
+    let currentVoiceUrl = null;
+
+    async function generateVoice() {
+      const text = document.getElementById("voiceText").value.trim();
+      const language = document.getElementById("voiceLanguage").value;
+      const button = document.getElementById("voiceButton");
+      const status = document.getElementById("voiceStatus");
+      const player = document.getElementById("voicePlayer");
+
+      if (!text) {
+        status.textContent = "Lütfen seslendirilecek metni yaz.";
+        return;
+      }
+
+      button.disabled = true;
+      player.style.display = "none";
+      status.textContent = "Anika sesini hazırlıyor...";
+
+      try {
+        const response = await fetch("/api/generate-voice", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            text,
+            language,
+            voice_id: "RABOvaPec1ymXz02oDQi"
+          })
+        });
+
+        if (!response.ok) {
+          let errorMessage = "Ses üretilemedi.";
+
+          try {
+            const errorData = await response.json();
+            errorMessage =
+              errorData.error || errorMessage;
+
+            if (errorData.details) {
+              errorMessage += " " + errorData.details;
+            }
+          } catch {}
+
+          throw new Error(errorMessage);
+        }
+
+        const audioBlob = await response.blob();
+
+        if (!audioBlob.size) {
+          throw new Error("Üretilen ses dosyası boş.");
+        }
+
+        if (currentVoiceUrl) {
+          URL.revokeObjectURL(currentVoiceUrl);
+        }
+
+        currentVoiceUrl = URL.createObjectURL(audioBlob);
+        player.src = currentVoiceUrl;
+        player.style.display = "block";
+
+        status.textContent =
+          "Ses başarıyla oluşturuldu! Dinlemek için oynat düğmesine bas.";
+
+      } catch (error) {
+        status.textContent =
+          "Hata: " + error.message;
+      } finally {
+        button.disabled = false;
+      }
+    }
+
     function addText(parent, tag, label, value) {
       const element = document.createElement(tag);
       const strong = document.createElement("strong");
@@ -222,7 +321,6 @@
       showProgress(0);
 
       try {
-        // AŞAMA 1: Senaryo üretimi
         status.textContent = "1. Aşama: Puffy senaryoyu hazırlıyor...";
 
         const scriptResponse = await fetch("/api/generate", {
@@ -260,7 +358,6 @@
 
         const sceneCards = [];
 
-        // Sahne kartlarını önceden oluştur
         project.scenes.forEach((scene) => {
           const card = document.createElement("div");
           card.className = "scene";
@@ -298,7 +395,6 @@
           });
         });
 
-        // AŞAMA 2: Görselleri sırayla üret
         for (let i = 0; i < sceneCards.length; i++) {
           const item = sceneCards[i];
           const sceneNumber = i + 1;
@@ -344,7 +440,6 @@
           );
         }
 
-        // AŞAMA 3: Proje bilgileri
         const description = document.createElement("div");
         description.className = "scene";
 
