@@ -169,8 +169,8 @@
     </section>
 
     <section class="panel">
-      <h2>Anika Ses Stüdyosu</h2>
-      <p>Seçtiğimiz Anika karakter sesiyle Türkçe ve İngilizce ses üret.</p>
+      <h2>Nichalia Schwartz Ses Stüdyosu</h2>
+      <p>Puffy'nin seçilmiş anlatıcı sesi Nichalia Schwartz ile Türkçe ve İngilizce ses üret.</p>
 
       <label>Ses dili</label>
       <select id="voiceLanguage">
@@ -182,10 +182,10 @@
       <textarea id="voiceText" rows="4">Merhaba minik kaşifler! Ben Puffy. Haydi birlikte renkleri keşfedelim!</textarea>
 
       <button id="voiceButton" onclick="generateVoice()">
-        Anika ile ses oluştur
+        Nichalia ile ses oluştur
       </button>
 
-      <p id="voiceStatus">Henüz ses üretilmedi.</p>
+      <p id="voiceStatus">Seçili ses: Nichalia Schwartz. Henüz ses üretilmedi.</p>
 
       <audio id="voicePlayer" controls style="display:none;"></audio>
     </section>
@@ -211,6 +211,7 @@
   </main>
 
   <script>
+    const NICHALIA_VOICE_ID = "XfNU2rGpBa01ckF309OY";
     let currentVoiceUrl = null;
 
     async function generateVoice() {
@@ -227,7 +228,7 @@
 
       button.disabled = true;
       player.style.display = "none";
-      status.textContent = "Nichalia Schwartz sesini hazırlıyor...";
+      status.textContent = "Nichalia Schwartz sesi hazırlanıyor...";
 
       try {
         const response = await fetch("/api/generate-voice", {
@@ -238,7 +239,7 @@
           body: JSON.stringify({
             text,
             language,
-            voice_id: "XfNU2rGpBa01ckF309OY"
+            voice_id: NICHALIA_VOICE_ID
           })
         });
 
@@ -248,7 +249,9 @@
           try {
             const errorData = await response.json();
             errorMessage =
-              errorData.error || errorMessage;
+              errorData.error ||
+              errorData.message ||
+              errorMessage;
 
             if (errorData.details) {
               errorMessage += " " + errorData.details;
@@ -273,11 +276,10 @@
         player.style.display = "block";
 
         status.textContent =
-          "Ses başarıyla oluşturuldu! Dinlemek için oynat düğmesine bas.";
+          "Nichalia Schwartz sesi başarıyla oluşturuldu! Dinlemek için oynat düğmesine bas.";
 
       } catch (error) {
-        status.textContent =
-          "Hata: " + error.message;
+        status.textContent = "Hata: " + error.message;
       } finally {
         button.disabled = false;
       }
