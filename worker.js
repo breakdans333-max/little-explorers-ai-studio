@@ -3,7 +3,7 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
 
-    // 1. Sunucu kontrolu
+    // 1. Sunucu kontrolü
     if (url.pathname === "/api/health") {
       return Response.json({
         worker: "active",
@@ -100,7 +100,7 @@ export default {
       }
     }
 
-    // 3. ElevenLabs ile ses üretimi
+    // 3. ElevenLabs ile Nichalia Schwartz ses üretimi
     if (url.pathname === "/api/generate-voice") {
       if (request.method !== "POST") {
         return Response.json(
@@ -120,9 +120,9 @@ export default {
         const body = await request.json();
         const text = String(body.text || "").trim();
 
-        // Varsayılan ses: Anika
+        // Varsayılan ses: Nichalia Schwartz
         const voiceId = String(
-          body.voice_id || "RABOvaPec1ymXz02oDQi"
+          body.voice_id || "XfNU2rGpBa01ckF309OY"
         ).trim();
 
         if (!text) {
@@ -189,7 +189,7 @@ export default {
           status: 200,
           headers: {
             "Content-Type": "audio/mpeg",
-            "Content-Disposition": 'inline; filename="anika-voice.mp3"',
+            "Content-Disposition": 'inline; filename="nichalia-voice.mp3"',
             "Cache-Control": "no-store"
           }
         });
