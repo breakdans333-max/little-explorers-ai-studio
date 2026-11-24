@@ -19,20 +19,21 @@ label{display:block;margin:16px 0 8px}
 input,select,textarea{width:100%;padding:13px;border-radius:9px;border:1px solid #53657a;background:#101827;color:white;font-size:16px}
 button{width:100%;padding:15px;margin-top:18px;border:0;border-radius:10px;background:#65dfcf;color:#10202b;font-size:16px;font-weight:bold;cursor:pointer}
 button:disabled{opacity:.5;cursor:wait}
-#status,#voiceStatus,#uploadStatus{color:#65dfcf;line-height:1.6;white-space:pre-wrap}
-#progressTrack{height:12px;background:#101827;border-radius:20px;overflow:hidden;margin-top:15px}
-#progressBar{height:100%;width:0%;background:#65dfcf;transition:width .3s}
+.status{color:#65dfcf;line-height:1.6;white-space:pre-wrap}
 .scene{border:1px solid #53657a;border-radius:12px;padding:16px;margin-top:18px}
 .scene img{display:block;width:100%;max-width:500px;margin:15px auto;border-radius:12px}
 .scene p{line-height:1.6;color:#dce5ef}
 .scene strong{color:#ffd166}
-audio{width:100%;margin-top:18px}
+audio{width:100%;margin-top:15px}
 footer{text-align:center;color:#91a0b2;padding:20px}
 .small{font-size:13px;color:#aebdce;line-height:1.5}
+.voice-box{border:1px solid #53657a;border-radius:12px;padding:15px;margin-top:18px}
 </style>
 </head>
+
 <body>
 <main class="container">
+
 <header>
 <h1>Little Explorers AI Studio</h1>
 <p>Puffy ile eğlenceli ve eğitici dünyalar keşfet!</p>
@@ -40,14 +41,17 @@ footer{text-align:center;color:#91a0b2;padding:20px}
 
 <section class="panel">
 <h2>Yeni video projesi</h2>
+
 <label>Video konusu</label>
 <input id="topic" placeholder="Örn: Renkleri öğreniyoruz">
+
 <label>Video dili</label>
 <select id="language">
 <option>Türkçe + English</option>
 <option>Türkçe</option>
 <option>English</option>
 </select>
+
 <label>Video süresi</label>
 <select id="duration">
 <option value="25">25 saniye</option>
@@ -55,42 +59,53 @@ footer{text-align:center;color:#91a0b2;padding:20px}
 <option value="45">45 saniye</option>
 <option value="60">60 saniye</option>
 </select>
+
 <label>Ek açıklama</label>
 <textarea id="details" rows="3" placeholder="Videoda neler olsun?"></textarea>
-<button id="generateButton" onclick="generateFullProject()">Tüm projeyi otomatik oluştur</button>
+
+<button id="generateButton" onclick="generateFullProject()">
+Tüm projeyi otomatik oluştur
+</button>
 </section>
 
 <section class="panel">
-<h2>Puffy Ses Stüdyosu</h2>
-<p>Önceden oluşturduğun ses dosyasını buradan yükleyebilirsin.</p>
+<h2>Puffy İki Dilli Ses Stüdyosu</h2>
+<p>İngilizce ve Türkçe anlatıcı seslerini ayrı ayrı yükle.</p>
 
-<label>MP3 veya WAV ses dosyası seç</label>
-<input id="audioUpload" type="file" accept="audio/mpeg,audio/mp3,audio/wav,audio/x-wav,audio/*">
+<div class="voice-box">
+<h3>English Voice 🇬🇧</h3>
+<label>İngilizce MP3 veya WAV dosyası</label>
+<input id="englishAudio" type="file" accept="audio/*">
+<p id="englishStatus" class="status">İngilizce ses bekleniyor.</p>
+<audio id="englishPlayer" controls style="display:none"></audio>
+<button id="englishDownload" style="display:none" onclick="downloadAudio('en')">
+İngilizce sesi indir
+</button>
+</div>
 
-<p id="uploadStatus">Henüz ses dosyası seçilmedi.</p>
-<audio id="uploadedPlayer" controls style="display:none"></audio>
+<div class="voice-box">
+<h3>Türkçe Ses</h3>
+<label>Türkçe MP3 veya WAV dosyası</label>
+<input id="turkishAudio" type="file" accept="audio/*">
+<p id="turkishStatus" class="status">Türkçe ses bekleniyor.</p>
+<audio id="turkishPlayer" controls style="display:none"></audio>
+<button id="turkishDownload" style="display:none" onclick="downloadAudio('tr')">
+Türkçe sesi indir
+</button>
+</div>
 
-<button id="downloadAudioButton" style="display:none" onclick="downloadUploadedAudio()">Ses dosyasını indir</button>
-
-<hr style="border-color:#53657a;margin-top:24px">
-
-<h3>İsteğe bağlı: ElevenLabs ile ses üretimi</h3>
-<label>Ses dili</label>
-<select id="voiceLanguage">
-<option value="tr">Türkçe</option>
-<option value="en">English</option>
-</select>
-<label>Seslendirilecek metin</label>
-<textarea id="voiceText" rows="4">Merhaba minik kaşifler! Ben Puffy. Haydi birlikte renkleri keşfedelim!</textarea>
-<button id="voiceButton" onclick="generateVoice()">Nichalia ile ses oluştur</button>
-<p id="voiceStatus">Önceden indirdiğin MP3 dosyasını kullanmak için yukarıdaki alanı kullan.</p>
-<audio id="voicePlayer" controls style="display:none"></audio>
+<p class="small">
+Not: Sesler şu anda bu sayfa açık olduğu sürece kullanılabilir.
+Sayfayı yenilersen dosyaları yeniden yüklemen gerekir.
+</p>
 </section>
 
 <section class="panel">
 <h2>Üretim durumu</h2>
-<p id="status">Henüz üretim başlatılmadı.</p>
-<div id="progressTrack"><div id="progressBar"></div></div>
+<p id="status" class="status">Henüz üretim başlatılmadı.</p>
+<div style="height:12px;background:#101827;border-radius:20px;overflow:hidden;margin-top:15px">
+<div id="progressBar" style="height:100%;width:0%;background:#65dfcf;transition:width .3s"></div>
+</div>
 </section>
 
 <section class="panel">
@@ -102,93 +117,58 @@ footer{text-align:center;color:#91a0b2;padding:20px}
 </main>
 
 <script>
-const NICHALIA_VOICE_ID="XfNU2rGpBa01ckF309OY";
-let currentVoiceUrl=null;
-let uploadedAudioUrl=null;
-let uploadedAudioFile=null;
+const audioFiles = {
+en: {file:null,url:null},
+tr: {file:null,url:null}
+};
 
-document.getElementById("audioUpload").addEventListener("change",function(){
+function setupAudioUpload(language){
+const isEnglish=language==="en";
+const input=document.getElementById(isEnglish?"englishAudio":"turkishAudio");
+const player=document.getElementById(isEnglish?"englishPlayer":"turkishPlayer");
+const status=document.getElementById(isEnglish?"englishStatus":"turkishStatus");
+const download=document.getElementById(isEnglish?"englishDownload":"turkishDownload");
+
+input.addEventListener("change",function(){
 const file=this.files && this.files[0];
-const status=document.getElementById("uploadStatus");
-const player=document.getElementById("uploadedPlayer");
-const downloadButton=document.getElementById("downloadAudioButton");
 
-if(!file){
-status.textContent="Henüz ses dosyası seçilmedi.";
-return;
-}
+if(!file)return;
 
 if(!file.type.startsWith("audio/")){
-status.textContent="Hata: Lütfen bir ses dosyası seç.";
+status.textContent="Hata: Lütfen ses dosyası seç.";
 this.value="";
 return;
 }
 
-if(uploadedAudioUrl){
-URL.revokeObjectURL(uploadedAudioUrl);
+if(audioFiles[language].url){
+URL.revokeObjectURL(audioFiles[language].url);
 }
 
-uploadedAudioFile=file;
-uploadedAudioUrl=URL.createObjectURL(file);
-player.src=uploadedAudioUrl;
-player.style.display="block";
-downloadButton.style.display="block";
-status.textContent="Ses yüklendi: "+file.name+" ("+(file.size/1024/1024).toFixed(2)+" MB). Dinleyebilirsin.";
-});
+audioFiles[language].file=file;
+audioFiles[language].url=URL.createObjectURL(file);
 
-function downloadUploadedAudio(){
-if(!uploadedAudioFile)return;
+player.src=audioFiles[language].url;
+player.style.display="block";
+download.style.display="block";
+
+status.textContent="Ses yüklendi: "+file.name+
+" ("+(file.size/1024/1024).toFixed(2)+" MB)";
+});
+}
+
+setupAudioUpload("en");
+setupAudioUpload("tr");
+
+function downloadAudio(language){
+const data=audioFiles[language];
+if(!data.file||!data.url)return;
+
 const link=document.createElement("a");
-link.href=uploadedAudioUrl;
-link.download=uploadedAudioFile.name;
+link.href=data.url;
+link.download=data.file.name;
 document.body.appendChild(link);
 link.click();
 link.remove();
-}
-
-async function generateVoice(){
-const text=document.getElementById("voiceText").value.trim();
-const language=document.getElementById("voiceLanguage").value;
-const button=document.getElementById("voiceButton");
-const status=document.getElementById("voiceStatus");
-const player=document.getElementById("voicePlayer");
-
-if(!text){status.textContent="Lütfen seslendirilecek metni yaz.";return;}
-
-button.disabled=true;
-player.style.display="none";
-status.textContent="Ses hazırlanıyor...";
-
-try{
-const response=await fetch("/api/generate-voice",{
-method:"POST",
-headers:{"Content-Type":"application/json"},
-body:JSON.stringify({text,language,voice_id:NICHALIA_VOICE_ID})
-});
-
-if(!response.ok){
-let message="Ses üretilemedi.";
-try{
-const data=await response.json();
-message=data.error||data.message||message;
-if(data.details)message+=" "+data.details;
-}catch{}
-throw new Error(message);
-}
-
-const blob=await response.blob();
-if(!blob.size)throw new Error("Ses dosyası boş.");
-
-if(currentVoiceUrl)URL.revokeObjectURL(currentVoiceUrl);
-currentVoiceUrl=URL.createObjectURL(blob);
-player.src=currentVoiceUrl;
-player.style.display="block";
-status.textContent="Ses başarıyla oluşturuldu.";
-}catch(error){
-status.textContent="Hata: "+error.message;
-}finally{
-button.disabled=false;
-}
 }
 
 function addText(parent,tag,label,value){
@@ -209,11 +189,15 @@ const topic=document.getElementById("topic").value.trim();
 const language=document.getElementById("language").value;
 const duration=Number(document.getElementById("duration").value);
 const details=document.getElementById("details").value.trim();
+
 const button=document.getElementById("generateButton");
 const status=document.getElementById("status");
 const output=document.getElementById("projectOutput");
 
-if(!topic){status.textContent="Lütfen önce video konusunu yaz.";return;}
+if(!topic){
+status.textContent="Lütfen önce video konusunu yaz.";
+return;
+}
 
 button.disabled=true;
 output.replaceChildren();
@@ -229,10 +213,16 @@ body:JSON.stringify({topic,language,duration,details})
 });
 
 const scriptData=await scriptResponse.json();
-if(!scriptResponse.ok||!scriptData.success)throw new Error(scriptData.error||"Senaryo oluşturulamadı.");
+
+if(!scriptResponse.ok||!scriptData.success){
+throw new Error(scriptData.error||"Senaryo oluşturulamadı.");
+}
 
 const project=scriptData.project;
-if(!project||!Array.isArray(project.scenes))throw new Error("Senaryo sahneleri alınamadı.");
+
+if(!project||!Array.isArray(project.scenes)){
+throw new Error("Senaryo sahneleri alınamadı.");
+}
 
 const title=document.createElement("h3");
 title.textContent=project.title_tr+" / "+project.title_en;
@@ -243,16 +233,22 @@ const sceneCards=[];
 project.scenes.forEach(scene=>{
 const card=document.createElement("div");
 card.className="scene";
+
 const heading=document.createElement("h3");
-heading.textContent="Sahne "+scene.scene_number+" ("+scene.start+"-"+scene.end+" saniye)";
+heading.textContent="Sahne "+scene.scene_number+
+" ("+scene.start+"-"+scene.end+" saniye)";
+
 const imageStatus=document.createElement("p");
 imageStatus.textContent="Görsel bekleniyor...";
+
 const image=document.createElement("img");
 image.alt="Puffy sahne görseli";
 image.style.display="none";
+
 card.appendChild(heading);
 card.appendChild(imageStatus);
 card.appendChild(image);
+
 addText(card,"p","Hareket",scene.motion);
 addText(card,"p","Kamera",scene.camera);
 addText(card,"p","Türkçe seslendirme",scene.voice_tr);
@@ -260,6 +256,7 @@ addText(card,"p","English narration",scene.voice_en);
 addText(card,"p","Türkçe ekran yazısı",scene.text_tr);
 addText(card,"p","English screen text",scene.text_en);
 addText(card,"p","Ses efekti",scene.sound_effect);
+
 output.appendChild(card);
 sceneCards.push({image,imageStatus,scene});
 });
@@ -267,7 +264,10 @@ sceneCards.push({image,imageStatus,scene});
 for(let i=0;i<sceneCards.length;i++){
 const item=sceneCards[i];
 const number=i+1;
-status.textContent="2. Aşama: "+number+"/"+sceneCards.length+" sahnenin görseli oluşturuluyor...";
+
+status.textContent="2. Aşama: "+number+"/"+sceneCards.length+
+" sahnenin görseli oluşturuluyor...";
+
 item.imageStatus.textContent="Görsel oluşturuluyor...";
 
 const response=await fetch("/api/generate-image",{
@@ -275,28 +275,38 @@ method:"POST",
 headers:{"Content-Type":"application/json"},
 body:JSON.stringify({prompt:item.scene.image_prompt})
 });
+
 const data=await response.json();
 
-if(!response.ok||!data.success||!data.image)throw new Error("Sahne "+number+": "+(data.error||"Görsel üretilemedi."));
+if(!response.ok||!data.success||!data.image){
+throw new Error("Sahne "+number+": "+
+(data.error||"Görsel üretilemedi."));
+}
 
 item.image.src=data.image;
 item.image.style.display="block";
 item.imageStatus.textContent="Görsel başarıyla oluşturuldu.";
+
 showProgress(Math.round(((i+1)/sceneCards.length)*100));
 }
 
 const description=document.createElement("div");
 description.className="scene";
+
 addText(description,"p","Türkçe YouTube açıklaması",project.description_tr);
 addText(description,"p","English YouTube description",project.description_en);
-addText(description,"p","Etiketler",Array.isArray(project.tags)?project.tags.join(" "):project.tags);
+addText(description,"p","Etiketler",
+Array.isArray(project.tags)?project.tags.join(" "):project.tags);
+
 output.appendChild(description);
 
-status.textContent="Tamamlandı! "+sceneCards.length+" sahnenin görselleri üretildi.";
+status.textContent="Tamamlandı! "+sceneCards.length+
+" sahnenin görselleri üretildi.";
 showProgress(100);
 
 }catch(error){
-status.textContent="Üretim durdu: "+error.message+"\nTamamlanan sahneler korunmuştur.";
+status.textContent="Üretim durdu: "+error.message+
+"\nTamamlanan sahneler korunmuştur.";
 }finally{
 button.disabled=false;
 }
